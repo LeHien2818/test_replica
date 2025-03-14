@@ -1,0 +1,36 @@
+services:
+  # Server B: PostgreSQL giả lập database của khách hàng
+  server-b-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: customer_user
+      POSTGRES_PASSWORD: customer_pass
+      POSTGRES_DB: customer_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - server-b-data:/var/lib/postgresql/data
+    networks:
+      - auth-network
+
+  # Server A: PostgreSQL nội bộ làm replica
+  server-a-db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: local_user
+      POSTGRES_PASSWORD: local_pass
+      POSTGRES_DB: replica_db
+    ports:
+      - "5433:5432" # Map cổng 5433 để không xung đột với server B
+    volumes:
+      - server-a-data:/var/lib/postgresql/data
+    networks:
+      - auth-network
+
+networks:
+  auth-network:
+    external: true
+
+volumes:
+  server-b-data:
+  server-a-data:

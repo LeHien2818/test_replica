@@ -1,0 +1,34 @@
+services:
+ 
+  # Server A: Ứng dụng Spring Boot để tạo replica và đồng bộ
+  server-a-app:
+    build:
+      context: ./replica
+      dockerfile: Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://server-b-db:5432/customer_db
+      SPRING_DATASOURCE_USERNAME: customer_user
+      SPRING_DATASOURCE_PASSWORD: customer_pass
+      SPRING_SECOND_DATASOURCE_URL: jdbc:postgresql://server-a-db:5432/replica_db
+      SPRING_SECOND_DATASOURCE_USERNAME: local_user
+      SPRING_SECOND_DATASOURCE_PASSWORD: local_pass
+    ports:
+      - "8080:8080"
+    networks:
+      - auth-network
+
+  # Server A: PostgREST cung cấp REST API từ replica
+  server-a-postgrest:
+    image: postgrest/postgrest:latest
+    environment:
+      PGRST_DB_URI: postgres://local_user:local_pass@server-a-db:5432/replica_db
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: local_user
+    ports:
+      - "3000:3000"
+    networks:
+      - auth-network
+
+networks:
+  auth-network:
+    external: true
